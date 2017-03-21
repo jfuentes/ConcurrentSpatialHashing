@@ -4,8 +4,8 @@
 
 #include "AABB.h"
 
-template<unsigned int Dimension>
-bool AABB<Dimension>::isEmpty() const {
+template<typename T, unsigned Dimension>
+bool AABB<T, Dimension>::isEmpty() const {
     for (unsigned i = 0; i < Dimension; i++) {
         if (maxPoint[i] <= minPoint[i])
             return true;
@@ -13,8 +13,8 @@ bool AABB<Dimension>::isEmpty() const {
     return false;
 }
 
-template<unsigned int Dimension>
-bool AABB<Dimension>::overlaps(const AABB &other) const {
+template<typename T, unsigned Dimension>
+bool AABB<T, Dimension>::overlaps(const AABB &other) const {
     /*
      * to check:
      *     maxX > other.minX &&
@@ -33,8 +33,8 @@ bool AABB<Dimension>::overlaps(const AABB &other) const {
     return true;
 }
 
-template<unsigned int Dimension>
-bool AABB<Dimension>::contains(const AABB &other) const {
+template<typename T, unsigned Dimension>
+bool AABB<T, Dimension>::contains(const AABB &other) const {
     /*
      * to check:
      *     other.minX >= minX &&
@@ -54,9 +54,9 @@ bool AABB<Dimension>::contains(const AABB &other) const {
     return true;
 }
 
-template<unsigned int Dimension>
-AABB<Dimension> AABB<Dimension>::merge(const AABB<Dimension> &other) const {
-    std::vector<unsigned> minMergedPoint(Dimension), maxMergedPoint(Dimension);
+template<typename T, unsigned Dimension>
+AABB<T, Dimension> AABB<T, Dimension>::merge(const AABB<T, Dimension> &other) const {
+    Point<T, Dimension> minMergedPoint, maxMergedPoint;
 
     for (unsigned i = 0; i < Dimension; i++) {
         minMergedPoint[i] = std::min(minPoint[i], other.minPoint[i]);
@@ -67,10 +67,10 @@ AABB<Dimension> AABB<Dimension>::merge(const AABB<Dimension> &other) const {
 
 }
 
-template<unsigned int Dimension>
-AABB<Dimension> AABB<Dimension>::intersection(const AABB<Dimension> &other) const {
+template<typename T, unsigned Dimension>
+AABB<T, Dimension> AABB<T, Dimension>::intersection(const AABB<T, Dimension> &other) const {
 
-    std::vector<unsigned> minMergedPoint(Dimension), maxMergedPoint(Dimension);
+    Point<T, Dimension> minMergedPoint, maxMergedPoint;
 
     for (unsigned i = 0; i < Dimension; i++) {
         minMergedPoint[i] = std::max(minPoint[i], other.minPoint[i]);
@@ -83,8 +83,8 @@ AABB<Dimension> AABB<Dimension>::intersection(const AABB<Dimension> &other) cons
 /*
  * dim : 1->width, 2->height, 3->depth
  */
-template<unsigned int Dimension>
-unsigned AABB<Dimension>::getLength(const unsigned dim) {
+template<typename T, unsigned Dimension>
+unsigned AABB<T, Dimension>::getLength(const unsigned dim) {
     if (dim <= Dimension) {
         return maxPoint[dim - 1] - minPoint[dim - 1];
     }

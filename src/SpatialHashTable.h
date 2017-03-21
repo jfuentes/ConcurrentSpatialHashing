@@ -9,20 +9,20 @@
 #include <mutex>
 
 
-template <unsigned int Dimension>
+template <typename T, unsigned Dimension>
 class HashEntry {
 public:
     int key;
-    AABB<Dimension> value;  //we allow for now only one bbox per position in the hash table
+    AABB<T, Dimension> value;  //we allow for now only one bbox per position in the hash table
     // to allow more than one, use a vector/list of bboxes
 
-    HashEntry(int key, AABB<Dimension> value): key(key), value(value){}
+    HashEntry(int key, AABB<T, Dimension> value): key(key), value(value){}
 };
 
-template <unsigned int Dimension>
+template <typename T, unsigned Dimension>
 class SpatialHashTable {
 private:
-    std::mutex lock;
+    std::mutex lock; // for multi insertions on hashtable
     //static const HashEntry<Dimension> *HASHENTRY_NULL;//new HashEntry<Dimension>(-1, AABB<Dimension>(std::vector<unsigned>({1}), std::vector<unsigned>({1})));
 
 public:
@@ -34,14 +34,11 @@ public:
     uint32_t HASHENTRY_NULL = -1;
 
 
-    //    template <unsigned int Dimension>
     SpatialHashTable(int size, double cFactor, int cWidth, int cSize): tableSize(size), conversionFactor(cFactor), width(cWidth), cellSize(cSize){
         table = new std::atomic<std::uint32_t>[tableSize];
-        //HASHENTRY_NULL = new HashEntry<Dimension>(-1, AABB<Dimension>(std::vector<unsigned>({1}), std::vector<unsigned>({1})));
         for (int i = 0; i < tableSize; i++)
             table[i].store(-1);
 
-        //conversionFactor = 0.04;
 
     }
 
@@ -81,8 +78,8 @@ public:
  *          8) (max.x, max.y, min.z)
  */
 
-    //template <unsigned int Dimension>
-    void put(AABB<Dimension> aabb) {
+    //template <typename T, unsigned Dimension>
+    void put(AABB<T,  Dimension> aabb) {
         //add synchronization
         int posMin = getCell(aabb.minPoint);
         int posMax = getCell(aabb.maxPoint);
@@ -123,7 +120,7 @@ public:
                 }
 
                 // pos:3
-                int pos3 = getCell(std::vector<unsigned>{aabb.maxPoint[0], aabb.minPoint[1]});
+                int pos3 = getCell(Point<T, Dimension>(aabb.maxPoint[0], aabb.minPoint[1]));
                 if(pos3!=posMin && pos3!=posMax) {
                     while (true) {
                         if (table[pos3].load() == -1) {
@@ -135,7 +132,7 @@ public:
                 }
 
                 // pos:4
-                int pos4 = getCell(std::vector<unsigned>{aabb.minPoint[0], aabb.maxPoint[1]});
+                int pos4 = getCell(Point<T, Dimension>(aabb.minPoint[0], aabb.maxPoint[1]));
                 if(pos4!=posMin && pos4!=posMax && pos4!=pos3) {
                     while (true) {
                         if (table[pos4].load() == -1) {
@@ -166,7 +163,7 @@ public:
                 }
 
                 // pos:3
-                int pos3 = getCell(std::vector<unsigned>{aabb.minPoint[0], aabb.minPoint[1], aabb.maxPoint[2]});
+                int pos3 = getCell(Point<T, Dimension>(aabb.minPoint[0], aabb.minPoint[1], aabb.maxPoint[2]));
                 if(pos3!=posMin && pos3!=posMax) {
                     while (true) {
                         if (table[pos3].load() == -1) {
@@ -178,7 +175,7 @@ public:
                 }
 
                 // pos:4
-                int pos4 = getCell(std::vector<unsigned>{aabb.minPoint[0], aabb.maxPoint[1], aabb.minPoint[2]});
+                int pos4 = getCell(Point<T, Dimension>(aabb.minPoint[0], aabb.maxPoint[1], aabb.minPoint[2]));
                 if(pos4!=posMin && pos4!=posMax && pos4!=pos3) {
                     while (true) {
                         if (table[pos4].load() == -1) {
@@ -189,7 +186,7 @@ public:
                 }
 
                 // pos:5
-                int pos5 = getCell(std::vector<unsigned>{aabb.maxPoint[0], aabb.minPoint[1], aabb.minPoint[2]});
+                int pos5 = getCell(Point<T, Dimension>(aabb.maxPoint[0], aabb.minPoint[1], aabb.minPoint[2]));
                 if(pos5!=posMin && pos5!=posMax && pos5!=pos3 && pos5!=pos4) {
                     while (true) {
                         if (table[pos5].load() == -1) {
@@ -200,7 +197,7 @@ public:
                 }
 
                 // pos:6
-                int pos6 = getCell(std::vector<unsigned>{aabb.maxPoint[0], aabb.minPoint[1], aabb.minPoint[2]});
+                int pos6 = getCell(Point<T, Dimension>(aabb.maxPoint[0], aabb.minPoint[1], aabb.minPoint[2]));
                 if(pos6!=posMin && pos6!=posMax && pos6!=pos3 && pos6!=pos4 && pos6!=pos5) {
                     while (true) {
                         if (table[pos6].load() == -1) {
@@ -211,7 +208,7 @@ public:
                 }
 
                 // pos:7
-                int pos7 = getCell(std::vector<unsigned>{aabb.maxPoint[0], aabb.minPoint[1], aabb.maxPoint[2]});
+                int pos7 = getCell(Point<T, Dimension>(aabb.maxPoint[0], aabb.minPoint[1], aabb.maxPoint[2]));
                 if(pos7!=posMin && pos7!=posMax && pos7!=pos3 && pos7!=pos4 && pos7!=pos5 && pos7!=pos6) {
                     while (true) {
                         if (table[pos7].load() == -1) {
@@ -222,7 +219,7 @@ public:
                 }
 
                 // pos:8
-                int pos8 = getCell(std::vector<unsigned>{aabb.maxPoint[0], aabb.maxPoint[1], aabb.minPoint[2]});
+                int pos8 = getCell(Point<T, Dimension>(aabb.maxPoint[0], aabb.maxPoint[1], aabb.minPoint[2]));
                 if(pos8!=posMin && pos8!=posMax && pos8!=pos3 && pos8!=pos4 && pos8!=pos5 && pos8!=pos6 && pos8!=pos7) {
                     while (true) {
                         if (table[pos8].load() == -1) {
@@ -240,8 +237,8 @@ public:
 
     }
 
-    //template <unsigned int Dimension>
-    void remove(AABB<Dimension> aabb) {
+    //template <typename T>
+    void remove(AABB<T, Dimension> aabb) {
         int posMin = getCell(aabb.minPoint);
         int posMax = getCell(aabb.maxPoint);
 
@@ -251,9 +248,6 @@ public:
             table[posMin].store(-1);
 
         }else{
-
-            //acquire lock
-            //lock.lock();
             // put entry into hash table
             if(Dimension==2){
                 //aabb falls in 2 or 4 cells
@@ -264,12 +258,12 @@ public:
                 table[posMax].store(-1);
 
                 // pos:3
-                int pos3 = getCell(std::vector<unsigned>{aabb.maxPoint[0], aabb.minPoint[1]});
+                int pos3 = getCell(Point<T, Dimension>(aabb.maxPoint[0], aabb.minPoint[1]));
                 if(pos3!=posMin && pos3!=posMax)
                     table[pos3].store(-1);
 
                 // pos:4
-                int pos4 = getCell(std::vector<unsigned>{aabb.minPoint[0], aabb.maxPoint[1]});
+                int pos4 = getCell(Point<T, Dimension>(aabb.minPoint[0], aabb.maxPoint[1]));
                 if(pos4!=posMin && pos4!=posMax && pos4!=pos3)
                     table[pos4].store(-1);
 
@@ -282,39 +276,35 @@ public:
                 table[posMax].store(-1);
 
                 // pos:3
-                int pos3 = getCell(std::vector<unsigned>{aabb.minPoint[0], aabb.minPoint[1], aabb.maxPoint[2]});
+                int pos3 = getCell(Point<T, Dimension>(aabb.minPoint[0], aabb.minPoint[1], aabb.maxPoint[2]));
                 if(pos3!=posMin && pos3!=posMax)
                     table[pos3].store(-1);
 
                 // pos:4
-                int pos4 = getCell(std::vector<unsigned>{aabb.minPoint[0], aabb.maxPoint[1], aabb.minPoint[2]});
+                int pos4 = getCell(Point<T, Dimension>(aabb.minPoint[0], aabb.maxPoint[1], aabb.minPoint[2]));
                 if(pos4!=posMin && pos4!=posMax && pos4!=pos3)
                     table[pos4].store(-1);
 
                 // pos:5
-                int pos5 = getCell(std::vector<unsigned>{aabb.maxPoint[0], aabb.minPoint[1], aabb.minPoint[2]});
+                int pos5 = getCell(Point<T, Dimension>(aabb.maxPoint[0], aabb.minPoint[1], aabb.minPoint[2]));
                 if(pos5!=posMin && pos5!=posMax && pos5!=pos3 && pos5!=pos4)
                     table[pos5].store(-1);
 
                 // pos:6
-                int pos6 = getCell(std::vector<unsigned>{aabb.maxPoint[0], aabb.minPoint[1], aabb.minPoint[2]});
+                int pos6 = getCell(Point<T, Dimension>(aabb.maxPoint[0], aabb.minPoint[1], aabb.minPoint[2]));
                 if(pos6!=posMin && pos6!=posMax && pos6!=pos3 && pos6!=pos4 && pos6!=pos5)
                     table[pos6].store(-1);
 
                 // pos:7
-                int pos7 = getCell(std::vector<unsigned>{aabb.maxPoint[0], aabb.minPoint[1], aabb.maxPoint[2]});
+                int pos7 = getCell(Point<T, Dimension>(aabb.maxPoint[0], aabb.minPoint[1], aabb.maxPoint[2]));
                 if(pos7!=posMin && pos7!=posMax && pos7!=pos3 && pos7!=pos4 && pos7!=pos5 && pos7!=pos6)
                     table[pos7].store(-1);
 
                 // pos:8
-                int pos8 = getCell(std::vector<unsigned>{aabb.maxPoint[0], aabb.maxPoint[1], aabb.minPoint[2]});
+                int pos8 = getCell(Point<T, Dimension>(aabb.maxPoint[0], aabb.maxPoint[1], aabb.minPoint[2]));
                 if(pos8!=posMin && pos8!=posMax && pos8!=pos3 && pos8!=pos4 && pos8!=pos5 && pos8!=pos6 && pos8!=pos7)
                     table[pos8].store(-1);
             }
-
-            //lock.unlock();
-
-
         }
 
     }
@@ -324,8 +314,8 @@ public:
         delete[] table;
     }
 
-    //template <unsigned int Dimension>
-    int getCell(const std::vector<unsigned> point) {
+    //template <typename T>
+    int getCell(Point<T, Dimension> point) {
         switch(Dimension){
             case 1: return (int)(point[0]*conversionFactor);
             case 2: return (point[0]/cellSize)+(point[1]/cellSize)*width;
@@ -334,17 +324,12 @@ public:
         return -1;
     }
 
-    bool checkAvailabilityMinPoint(AABB<Dimension> aabb){
+    //template <typename T>
+    bool checkAvailabilityMinPoint(AABB<T, Dimension> aabb){
         int posMin = getCell(aabb.minPoint);
         return table[posMin].load()== -1?true:false;
     }
 
-
-
-
 };
-
-
-
 
 #endif //CONCURRENTSPATIALHASHING_SPATIALHASHTABLE_H

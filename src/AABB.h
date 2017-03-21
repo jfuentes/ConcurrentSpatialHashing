@@ -3,18 +3,19 @@
 #define CONCURRENTSPATIALHASHING_AABB_H
 
 #include <vector>
+#include "Point.h"
 
-template<unsigned int Dimension>
+template<typename T, unsigned Dimension>
 class AABB {
 
 public:
 
     // info about axis aligned bounding box
-    std::vector<unsigned> minPoint;
-    std::vector<unsigned> maxPoint;
+    Point<T, Dimension> minPoint;
+    Point<T, Dimension> maxPoint;
 
     AABB() {}
-    AABB(std::vector<unsigned> min, std::vector<unsigned> max) : minPoint(min), maxPoint(max) {};
+    AABB(Point<T, Dimension> min, Point<T, Dimension> max) : minPoint(min), maxPoint(max) {};
     bool isEmpty() const;
     bool overlaps(const AABB &other) const;
     bool contains(const AABB &other) const;

@@ -14,14 +14,14 @@
 
 //work to be executed by threads
 struct ParallelWork {
-    SpatialHashTable<2> *hashTable2d;
-    std::vector<AABB<2>> aabbs;
+    SpatialHashTable<int, 2> *hashTable2d;
+    std::vector<AABB<int, 2>> aabbs;
     void operator()( const tbb::blocked_range<int>& range ) const {
         for( int i=range.begin(); i!=range.end(); ++i ) {
-            const auto aabb = aabbs[i];
+            AABB<int, 2> aabb = aabbs[i];
             //std::cout << "thread instering " << aabb.minPoint[0]<< "," << aabb.minPoint[1] << " and " << aabb.maxPoint[0]<< "," << aabb.maxPoint[1] << std::endl;
             hashTable2d->put(aabb);
-            // Sleep 
+            // Sleep for a little
             std::this_thread::sleep_for(std::chrono::milliseconds(200));
             hashTable2d->remove(aabb);
             //std::cout << "thread frees " << aabb.minPoint[0]<< "," << aabb.minPoint[1] << " and " << aabb.maxPoint[0]<< "," << aabb.maxPoint[1] << std::endl;
@@ -36,21 +36,21 @@ struct ParallelWork {
 
 TEST_CASE( "HashTable creation 2D", "[hashtable]" ) {
     //float factor = ;
-    SpatialHashTable<2> hashTable2D(16,1.0/25,4, 25);
-    REQUIRE( hashTable2D.getCell(std::vector<unsigned>{0,0}) == 0 );
-    REQUIRE( hashTable2D.getCell(std::vector<unsigned>{5,5}) == 0 );
-    REQUIRE( hashTable2D.getCell(std::vector<unsigned>{99,99}) == 15 );
-    REQUIRE( hashTable2D.getCell(std::vector<unsigned>{25,40}) == 5 );
-    REQUIRE( hashTable2D.getCell(std::vector<unsigned>{25,50}) == 9 );
-    REQUIRE( hashTable2D.getCell(std::vector<unsigned>{99,99}) == 15 );
+    SpatialHashTable<int, 2> hashTable2D(16,1.0/25,4, 25);
+    REQUIRE( hashTable2D.getCell(Point<int, 2>(0,0)) == 0 );
+    REQUIRE( hashTable2D.getCell(Point<int, 2>(5,5)) == 0 );
+    REQUIRE( hashTable2D.getCell(Point<int, 2>(99,99)) == 15 );
+    REQUIRE( hashTable2D.getCell(Point<int, 2>(25,40)) == 5 );
+    REQUIRE( hashTable2D.getCell(Point<int, 2>(25,50)) == 9 );
+    REQUIRE( hashTable2D.getCell(Point<int, 2>(99,99)) == 15 );
 }
 
 
 TEST_CASE( "HashTable insertion 2D", "[hashtableInsertion1]" ) {
     //float factor = ;
-    SpatialHashTable<2> hashTable2D(16,1.0/25,4, 25);
-    AABB<2> aabb1(std::vector<unsigned>{0,0},std::vector<unsigned>{2,2});
-    AABB<2> aabb2(std::vector<unsigned>{1,1},std::vector<unsigned>{3,3});
+    SpatialHashTable<int, 2> hashTable2D(16,1.0/25,4, 25);
+    AABB<int, 2> aabb1(Point<int, 2>(0,0), Point<int, 2>(2,2));
+    AABB<int, 2> aabb2(Point<int, 2>(1,1), Point<int, 2>(3,3));
 
     SECTION("Inserting and removing AABB 1 cell"){
         REQUIRE(hashTable2D.checkAvailabilityMinPoint(aabb1) == true);
@@ -60,8 +60,8 @@ TEST_CASE( "HashTable insertion 2D", "[hashtableInsertion1]" ) {
         REQUIRE(hashTable2D.checkAvailabilityMinPoint(aabb2) == true);
     }
 
-    AABB<2> aabb3(std::vector<unsigned>{20,2},std::vector<unsigned>{30,10}); // should take 2 cells
-    AABB<2> aabb4(std::vector<unsigned>{33,5},std::vector<unsigned>{45,12});
+    AABB<int, 2> aabb3(Point<int, 2>(20,2), Point<int, 2>(30,10)); // should take 2 cells
+    AABB<int, 2> aabb4(Point<int, 2>(33,5), Point<int, 2>(45,12));
 
     SECTION("Inserting and removing AABB 2 cells"){
         //REQUIRE(hashTable2D.checkAvailabilityMinPoint(aabb1) == true);
@@ -71,12 +71,11 @@ TEST_CASE( "HashTable insertion 2D", "[hashtableInsertion1]" ) {
         REQUIRE(hashTable2D.checkAvailabilityMinPoint(aabb4) == true);
     }
 
-    AABB<2> aabb5(std::vector<unsigned>{20,20},std::vector<unsigned>{30,30}); // should take 4 cells
-    AABB<2> aabb6(std::vector<unsigned>{10,30},std::vector<unsigned>{20,40});
-    AABB<2> aabb7(std::vector<unsigned>{30,30},std::vector<unsigned>{40,40});
+    AABB<int, 2> aabb5(Point<int, 2>(20,20), Point<int, 2>(30,30)); // should take 4 cells
+    AABB<int, 2> aabb6(Point<int, 2>(10,30), Point<int, 2>(20,40));
+    AABB<int, 2> aabb7(Point<int, 2>(30,30), Point<int, 2>(40,40));
 
     SECTION("Inserting and removing AABB 4 cells"){
-        //REQUIRE(hashTable2D.checkAvailabilityMinPoint(aabb1) == true);
         hashTable2D.put(aabb5);
         REQUIRE(hashTable2D.checkAvailabilityMinPoint(aabb1) == false); //first cell
         REQUIRE(hashTable2D.checkAvailabilityMinPoint(aabb3) == false); //2nd cell
@@ -97,12 +96,12 @@ TEST_CASE( "Multithreaded HashTable insertion 2D", "[hashtableInsertion2]" ){
     int number_aabbs = 50;
     int number_threads = 4;
 
-    std::vector<AABB<2>> aabbs(number_aabbs);
-    SpatialHashTable<2> hashTable2D(16,1.0/25,4, 25);
+    std::vector<AABB<int ,2>> aabbs(number_aabbs);
+    SpatialHashTable<int, 2> hashTable2D(16,1.0/25,4, 25);
 
     //creation of vertices
     for(int i=0; i<number_aabbs; i++){
-        aabbs[i] = AABB<2>(std::vector<unsigned>{(unsigned int)i, (unsigned int)i}, std::vector<unsigned>{(unsigned int)i+2, (unsigned int)i+2});
+        aabbs[i] = AABB<int, 2>(Point<int, 2>(i, i), Point<int, 2>(i+2, i+2));
     }
 
     //initialize the TBB task scheduler with the number of threads specified
