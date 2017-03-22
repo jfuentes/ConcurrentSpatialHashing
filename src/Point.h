@@ -5,7 +5,7 @@
 #ifndef CONCURRENTSPATIALHASHING_POINT_H
 #define CONCURRENTSPATIALHASHING_POINT_H
 
-#include <array>            // std::array
+#include <array>
 
 #define STATIC_ASSERT( e ) static_assert( e, "!(" #e ")" )
 

@@ -197,7 +197,7 @@ public:
                 }
 
                 // pos:6
-                int pos6 = getCell(Point<T, Dimension>(aabb.maxPoint[0], aabb.minPoint[1], aabb.minPoint[2]));
+                int pos6 = getCell(Point<T, Dimension>(aabb.minPoint[0], aabb.maxPoint[1], aabb.maxPoint[2]));
                 if(pos6!=posMin && pos6!=posMax && pos6!=pos3 && pos6!=pos4 && pos6!=pos5) {
                     while (true) {
                         if (table[pos6].load() == -1) {
@@ -291,7 +291,7 @@ public:
                     table[pos5].store(-1);
 
                 // pos:6
-                int pos6 = getCell(Point<T, Dimension>(aabb.maxPoint[0], aabb.minPoint[1], aabb.minPoint[2]));
+                int pos6 = getCell(Point<T, Dimension>(aabb.minPoint[0], aabb.maxPoint[1], aabb.maxPoint[2]));
                 if(pos6!=posMin && pos6!=posMax && pos6!=pos3 && pos6!=pos4 && pos6!=pos5)
                     table[pos6].store(-1);
 
@@ -318,8 +318,8 @@ public:
     int getCell(Point<T, Dimension> point) {
         switch(Dimension){
             case 1: return (int)(point[0]*conversionFactor);
-            case 2: return (point[0]/cellSize)+(point[1]/cellSize)*width;
-            case 3: return (int)(point[0]*conversionFactor)+(int)(point[1]*conversionFactor)*width+(int)(point[2]*conversionFactor)*width;
+            case 2: return (int)(point[0]/cellSize)+((int)point[1]/cellSize)*width;
+            case 3: return (int)(point[0]/cellSize)+((int)point[1]/cellSize)*width+((int)point[2]/cellSize)*width*width;
         }
         return -1;
     }
